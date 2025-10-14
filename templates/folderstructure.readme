@@ -1,0 +1,25 @@
+yatrasetu_web/
+├── app.py
+├── database.py
+├── requirements.txt
+├── static/
+│   ├── css/
+│   │   ├── style.css
+│   │   └── responsive.css
+│   ├── js/
+│   │   ├── main.js
+│   │   ├── home.js
+│   │   ├── post-ride.js
+│   │   └── find-ride.js
+│   └── images/
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   ├── login.html
+│   ├── register.html
+│   ├── post_ride.html
+│   ├── find_ride.html
+│   ├── my_rides.html
+│   ├── my_bookings.html
+│   └── profile.html
+└── invoices/

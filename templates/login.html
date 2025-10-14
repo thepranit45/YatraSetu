@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4">Login to YatraSetu</h2>
+                
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i> Login
+                    </button>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Don't have an account? <a href="/register" class="text-primary">Register here</a></p>
+                </div>
+
+                <!-- Test Accounts -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="text-center">Test Accounts:</h6>
+                    <small class="d-block">Admin: admin@yatrasetu.com / admin123</small>
+                    <small class="d-block">Driver: raj@yatrasetu.com / driver123</small>
+                    <small class="d-block">User: Register new account</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

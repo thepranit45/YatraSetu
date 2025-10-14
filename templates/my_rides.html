@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}My Rides - YatraSetu{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 fw-bold text-primary mb-2">My Rides</h1>
+                    <p class="text-muted">Manage your posted rides and track bookings</p>
+                </div>
+                <a href="{{ url_for('post_ride') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i> Post New Ride
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-primary mb-2">{{ rides|length }}</h3>
+                    <p class="text-muted mb-0">Total Rides</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-success mb-2">
+                        {{ rides|selectattr('status', 'equalto', 'active')|list|length }}
+                    </h3>
+                    <p class="text-muted mb-0">Active Rides</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-warning mb-2">
+                        {{ rides|selectattr('status', 'equalto', 'completed')|list|length }}
+                    </h3>
+                    <p class="text-muted mb-0">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-info mb-2">
+                        {{ rides|sum(attribute='bookings_count') }}
+                    </h3>
+                    <p class="text-muted mb-0">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rides List -->
+    <div class="card shadow">
+        <div class="card-header bg-white py-3">
+            <h4 class="mb-0"><i class="fas fa-list me-2"></i>Your Posted Rides</h4>
+        </div>
+        <div class="card-body">
+            {% if rides %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Route</th>
+                            <th>Type</th>
+                            <th>Departure</th>
+                            <th>Capacity</th>
+                            <th>Price</th>
+                            <th>Bookings</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ride in rides %}
+                        <tr>
+                            <td>
+                                <strong>{{ ride.source_city }} → {{ ride.destination_city }}</strong>
+                                <br>
+                                <small class="text-muted">{{ ride.vehicle_type }} • {{ ride.vehicle_number }}</small>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if ride.ride_type == 'car' %}bg-primary
+                                    {% elif ride.ride_type == 'bike' %}bg-success
+                                    {% else %}bg-warning{% endif %}">
+                                    <i class="fas fa-{{ 'car' if ride.ride_type == 'car' else 'motorcycle' if ride.ride_type == 'bike' else 'truck' }} me-1"></i>
+                                    {{ ride.ride_type|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ ride.departure_time[:16] }}</small>
+                            </td>
+                            <td>
+                                {{ ride.available_capacity }} {{ 'seats' if ride.ride_type != 'logistics' else 'kg' }}
+                            </td>
+                            <td>
+                                <strong>₹{{ ride.price_per_unit }}</strong>
+                                <small class="text-muted">/{{ 'seat' if ride.ride_type != 'logistics' else 'kg' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ ride.bookings_count or 0 }}</span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if ride.status == 'active' %}bg-success
+                                    {% elif ride.status == 'completed' %}bg-secondary
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ ride.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewRideDetails({{ride.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning" onclick="editRide({{ ride.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% if ride.status == 'active' %}
+                                    <button class="btn btn-outline-danger" onclick="cancelRide({{ ride.id }})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-road fa-4x text-muted"></i>
+                </div>
+                <h4 class="text-muted mb-3">No Rides Posted Yet</h4>
+                <p class="text-muted mb-4">Start sharing your journey and earn while you travel</p>
+                <a href="{{ url_for('post_ride') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i> Post Your First Ride
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="fas fa-lightbulb me-2 text-warning"></i>Tips for Better Rides</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-camera text-primary me-2"></i>
+                                <small>Add clear photos of your vehicle</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-clock text-success me-2"></i>
+                                <small>Be punctual and reliable</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-comment text-info me-2"></i>
+                                <small>Communicate clearly with passengers</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewRideDetails(rideId) {
+    Swal.fire({
+        title: 'Ride Details',
+        text: 'Feature coming soon!',
+        icon: 'info'
+    });
+}
+
+function editRide(rideId) {
+    Swal.fire({
+        title: 'Edit Ride',
+        text: 'Feature coming soon!',
+        icon: 'info'
+    });
+}
+
+function cancelRide(rideId) {
+    Swal.fire({
+        title: 'Cancel Ride?',
+        text: 'Are you sure you want to cancel this ride?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Yes, cancel it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire(
+                'Cancelled!',
+                'Your ride has been cancelled.',
+                'success'
+            );
+        }
+    });
+}
+</script>
+{% endblock %}

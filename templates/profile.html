@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - YatraSetu{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Profile Sidebar -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <!-- Profile Picture -->
+                    <div class="mb-4">
+                        <div class="position-relative d-inline-block">
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white"
+                                 style="width: 120px; height: 120px; font-size: 3rem;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <button class="btn btn-sm btn-light position-absolute bottom-0 end-0 rounded-circle">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- User Info -->
+                    <h4 class="fw-bold mb-1">{{ user.name }}</h4>
+                    <p class="text-muted mb-2">{{ user.email }}</p>
+                    
+                    <!-- Rating -->
+                    <div class="mb-3">
+                        <div class="rating-stars mb-1">
+                            {% for i in range(5) %}
+                                {% if i < user.rating|int %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">{{ user.rating }}/5.0</small>
+                    </div>
+                    
+                    <!-- User Type Badge -->
+                    <span class="badge 
+                        {% if user.user_type == 'driver' %}bg-success
+                        {% elif user.user_type == 'admin' %}bg-danger
+                        {% else %}bg-primary{% endif %} mb-3">
+                        <i class="fas fa-{{ 'car' if user.user_type == 'driver' else 'user' if user.user_type == 'passenger' else 'cog' }} me-1"></i>
+                        {{ user.user_type|title }}
+                    </span>
+                    
+                    <!-- Stats -->
+                    <div class="row text-center mt-4">
+                        <div class="col-6">
+                            <h5 class="fw-bold text-primary mb-1">{{ user.total_rides or 0 }}</h5>
+                            <small class="text-muted">Total Rides</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="fw-bold text-success mb-1">{{ user.days_joined or 1 }}</h5>
+                            <small class="text-muted">Days</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card shadow mt-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('post_ride') }}" class="btn btn-outline-primary text-start">
+                            <i class="fas fa-plus me-2"></i> Post a Ride
+                        </a>
+                        <a href="{{ url_for('find_ride') }}" class="btn btn-outline-success text-start">
+                            <i class="fas fa-search me-2"></i> Find a Ride
+                        </a>
+                        <a href="{{ url_for('my_rides') }}" class="btn btn-outline-info text-start">
+                            <i class="fas fa-car me-2"></i> My Rides
+                        </a>
+                        <a href="{{ url_for('my_bookings') }}" class="btn btn-outline-warning text-start">
+                            <i class="fas fa-bookmark me-2"></i> My Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Details -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Profile Information</h4>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="row g-3">
+                            <!-- Personal Information -->
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">Personal Information</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Full Name</label>
+                                <input type="text" class="form-control" value="{{ user.name }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email Address</label>
+                                <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Phone Number</label>
+                                <input type="tel" class="form-control" value="{{ user.phone or 'Not provided' }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">User Type</label>
+                                <input type="text" class="form-control" value="{{ user.user_type|title }}" readonly>
+                            </div>
+                            
+                            <!-- Account Information -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-primary mb-3">Account Information</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Member Since</label>
+                                <input type="text" class="form-control" value="{{ user.member_since[:10] if user.member_since else 'Recently' }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Account Rating</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ user.rating }}/5.0" readonly>
+                                    <span class="input-group-text">
+                                        <i class="fas fa-star text-warning"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Total Rides</label>
+                                <input type="text" class="form-control" value="{{ user.total_rides or 0 }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Account Status</label>
+                                <input type="text" class="form-control text-success" value="Active ✓" readonly>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="col-12 mt-4">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-primary" onclick="editProfile()">
+                                        <i class="fas fa-edit me-2"></i> Edit Profile
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="changePassword()">
+                                        <i class="fas fa-lock me-2"></i> Change Password
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info" onclick="showVerification()">
+                                        <i class="fas fa-shield-alt me-2"></i> Verify Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Safety Information -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2 text-success"></i>Safety & Verification</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
+                                <div>
+                                    <h6 class="mb-1">Email Verified</h6>
+                                    <small class="text-muted">Your email address is confirmed</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-mobile-alt text-warning me-3 fa-lg"></i>
+                                <div>
+                                    <h6 class="mb-1">Phone Verification</h6>
+                                    <small class="text-muted">
+                                        {% if user.phone %}Verified{% else %}Not verified{% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-id-card text-info me-3 fa-lg"></i>
+                                <div>
+                                    <h6 class="mb-1">ID Verification</h6>
+                                    <small class="text-muted">Pending verification</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-bell text-danger me-3 fa-lg"></i>
+                                <div>
+                                    <h6 class="mb-1">SOS Feature</h6>
+                                    <small class="text-muted">Emergency button active</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editProfile() {
+    Swal.fire({
+        title: 'Edit Profile',
+        text: 'Profile editing feature coming soon!',
+        icon: 'info'
+    });
+}
+
+function changePassword() {
+    Swal.fire({
+        title: 'Change Password',
+        text: 'Password change feature coming soon!',
+        icon: 'info'
+    });
+}
+
+function showVerification() {
+    Swal.fire({
+        title: 'Account Verification',
+        html: `
+            <div class="text-start">
+                <p>Complete these verifications for enhanced safety:</p>
+                <ul class="text-start">
+                    <li>✅ Email Address - <strong>Verified</strong></li>
+                    <li>📱 Phone Number - <strong>{{ 'Verified' if user.phone else 'Pending' }}</strong></li>
+                    <li>🆔 Government ID - <strong>Pending</strong></li>
+                    <li>📸 Selfie Verification - <strong>Pending</strong></li>
+                </ul>
+            </div>
+        `,
+        icon: 'info'
+    });
+}
+</script>
+{% endblock %}

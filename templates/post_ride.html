@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+
+{% block title %}Post Your Ride - YatraSetu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-check-card {
+        cursor: pointer;
+    }
+    
+    .form-check-card input[type="radio"] {
+        display: none;
+    }
+    
+    .form-check-card .card {
+        transition: all 0.3s ease;
+        border: 2px solid #e2e8f0;
+    }
+    
+    .form-check-card input[type="radio"]:checked + .card {
+        border-color: #2563eb;
+        background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+        transform: translateY(-5px);
+    }
+    
+    .ride-type-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .price-preview {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin: 0 10px;
+        position: relative;
+    }
+    
+    .step.active {
+        background: #2563eb;
+        color: white;
+    }
+    
+    .step.completed {
+        background: #10b981;
+        color: white;
+    }
+    
+    .step.inactive {
+        background: #e2e8f0;
+        color: #64748b;
+    }
+    
+    .step-line {
+        flex: 1;
+        height: 2px;
+        background: #e2e8f0;
+        margin: 0 10px;
+    }
+    
+    .step-line.completed {
+        background: #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-primary mb-3">Post Your Ride</h1>
+                <p class="lead text-muted">Share your journey and connect with fellow travelers</p>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active">1</div>
+                <div class="step-line"></div>
+                <div class="step inactive">2</div>
+                <div class="step-line"></div>
+                <div class="step inactive">3</div>
+            </div>
+
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-road me-2"></i>Ride Details</h4>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form id="postRideForm" class="needs-validation" novalidate>
+                        <!-- Ride Type Selection -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">1. What are you offering?</h5>
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <label class="form-check-card w-100">
+                                        <input type="radio" name="ride_type" value="car" class="form-check-input" checked required>
+                                        <div class="card h-100 text-center p-4">
+                                            <div class="ride-type-icon bg-primary text-white mx-auto">
+                                                <i class="fas fa-car"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">Car Pooling</h6>
+                                            <p class="text-muted small mb-0">Share car seats for long routes</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label class="form-check-card w-100">
+                                        <input type="radio" name="ride_type" value="bike" class="form-check-input" required>
+                                        <div class="card h-100 text-center p-4">
+                                            <div class="ride-type-icon bg-success text-white mx-auto">
+                                                <i class="fas fa-motorcycle"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">Bike Pooling</h6>
+                                            <p class="text-muted small mb-0">Share bike seat for quick rides</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label class="form-check-card w-100">
+                                        <input type="radio" name="ride_type" value="logistics" class="form-check-input" required>
+                                        <div class="card h-100 text-center p-4">
+                                            <div class="ride-type-icon bg-warning text-white mx-auto">
+                                                <i class="fas fa-truck"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">Goods Transport</h6>
+                                            <p class="text-muted small mb-0">Transport packages and goods</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Route Details -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">2. Route Information</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">From City *</label>
+                                    <input type="text" class="form-control" name="source_city" placeholder="e.g., Nashik" required>
+                                    <div class="invalid-feedback">Please enter departure city.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">To City *</label>
+                                    <input type="text" class="form-control" name="destination_city" placeholder="e.g., Delhi" required>
+                                    <div class="invalid-feedback">Please enter destination city.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Departure Date & Time *</label>
+                                    <input type="datetime-local" class="form-control" name="departure_time" required>
+                                    <div class="invalid-feedback">Please select departure time.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Expected Arrival Time</label>
+                                    <input type="datetime-local" class="form-control" name="arrival_time">
+                                    <small class="text-muted">Optional - helps travelers plan better</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Details -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">3. Vehicle Information</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Vehicle Type *</label>
+                                    <select class="form-select" name="vehicle_type" required>
+                                        <option value="">Select Vehicle Type</option>
+                                        <optgroup label="Cars">
+                                            <option value="hatchback">Hatchback</option>
+                                            <option value="sedan">Sedan</option>
+                                            <option value="suv">SUV</option>
+                                            <option value="luxury">Luxury Car</option>
+                                        </optgroup>
+                                        <optgroup label="Bikes">
+                                            <option value="motorcycle">Motorcycle</option>
+                                            <option value="scooter">Scooter</option>
+                                        </optgroup>
+                                        <optgroup label="Commercial">
+                                            <option value="tempo">Tempo</option>
+                                            <option value="truck">Truck</option>
+                                            <option value="van">Delivery Van</option>
+                                        </optgroup>
+                                    </select>
+                                    <div class="invalid-feedback">Please select vehicle type.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Vehicle Number *</label>
+                                    <input type="text" class="form-control" name="vehicle_number" placeholder="e.g., MH15AB1234" required>
+                                    <div class="invalid-feedback">Please enter vehicle number.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" id="capacityLabel">Available Seats *</label>
+                                    <input type="number" class="form-control" name="available_capacity" min="1" max="10" value="4" required>
+                                    <div class="invalid-feedback">Please enter available capacity.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Price per Seat/Kg (₹) *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-primary text-white">₹</span>
+                                        <input type="number" class="form-control" name="price_per_unit" placeholder="500" min="1" required>
+                                        <span class="input-group-text" id="priceUnit">per seat</span>
+                                    </div>
+                                    <div class="invalid-feedback">Please enter price.</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Price Preview -->
+                            <div class="price-preview mt-3" id="pricePreview">
+                                <h6 class="mb-2">Estimated Earnings</h6>
+                                <h4 class="fw-bold mb-1">₹<span id="estimatedEarnings">2000</span></h4>
+                                <small>Based on your price and capacity</small>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">4. Additional Details</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Additional Information</label>
+                                <textarea class="form-control" name="additional_info" rows="4" placeholder="Any special instructions, stops along the way, vehicle features, luggage space, etc..."></textarea>
+                                <small class="text-muted">This information helps travelers make better decisions.</small>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Contact Number *</label>
+                                    <input type="tel" class="form-control" name="contact_number" value="{{ session.user_phone or '' }}" required>
+                                    <div class="invalid-feedback">Please enter contact number.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Preferred Language</label>
+                                    <select class="form-select" name="preferred_language">
+                                        <option value="hindi">Hindi</option>
+                                        <option value="english">English</option>
+                                        <option value="marathi">Marathi</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Submit -->
+                        <div class="form-section">
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">
+                                    I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>. I confirm that all information provided is accurate.
+                                </label>
+                                <div class="invalid-feedback">You must agree before submitting.</div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg py-3">
+                                    <i class="fas fa-paper-plane me-2"></i> Post Ride Now
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="card border-0 bg-light mt-4">
+                <div class="card-body text-center">
+                    <h6 class="mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>Need Help?</h6>
+                    <p class="text-muted mb-3">Check out our <a href="#" class="text-primary">posting guidelines</a> or <a href="#" class="text-primary">contact support</a> for assistance.</p>
+                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                        <span class="badge bg-primary"><i class="fas fa-shield-alt me-1"></i> Verified Users</span>
+                        <span class="badge bg-success"><i class="fas fa-map-marker-alt me-1"></i> Live Tracking</span>
+                        <span class="badge bg-warning"><i class="fas fa-rupee-sign me-1"></i> Secure Payments</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/post-ride.js') }}"></script>
+{% endblock %}

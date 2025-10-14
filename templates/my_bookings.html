@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - YatraSetu{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 fw-bold text-primary mb-2">My Bookings</h1>
+                    <p class="text-muted">Track your ride bookings and travel history</p>
+                </div>
+                <a href="{{ url_for('find_ride') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i> Find More Rides
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-primary mb-2">{{ bookings|length }}</h3>
+                    <p class="text-muted mb-0">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-success mb-2">
+                        {{ bookings|selectattr('status', 'equalto', 'confirmed')|list|length }}
+                    </h3>
+                    <p class="text-muted mb-0">Confirmed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-warning mb-2">
+                        {{ bookings|selectattr('status', 'equalto', 'completed')|list|length }}
+                    </h3>
+                    <p class="text-muted mb-0">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold text-info mb-2">₹{{ bookings|sum(attribute='total_amount') }}</h3>
+                    <p class="text-muted mb-0">Total Spent</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookings List -->
+    <div class="card shadow">
+        <div class="card-header bg-white py-3">
+            <h4 class="mb-0"><i class="fas fa-bookmark me-2"></i>Your Ride Bookings</h4>
+        </div>
+        <div class="card-body">
+            {% if bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Route & Driver</th>
+                            <th>Type</th>
+                            <th>Travel Date</th>
+                            <th>Quantity</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Booked On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td>
+                                <strong>{{ booking.source_city }} → {{ booking.destination_city }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>{{ booking.driver_name }}
+                                    {% if booking.contact_number %}
+                                    • {{ booking.contact_number }}
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if booking.ride_type == 'car' %}bg-primary
+                                    {% elif booking.ride_type == 'bike' %}bg-success
+                                    {% else %}bg-warning{% endif %}">
+                                    <i class="fas fa-{{ 'car' if booking.ride_type == 'car' else 'motorcycle' if booking.ride_type == 'bike' else 'truck' }} me-1"></i>
+                                    {{ booking.ride_type|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ booking.departure_time[:16] }}</small>
+                            </td>
+                            <td>
+                                {{ booking.quantity }} {{ 'seats' if booking.ride_type != 'logistics' else 'kg' }}
+                            </td>
+                            <td>
+                                <strong class="text-success">₹{{ booking.total_amount }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if booking.status == 'confirmed' %}bg-success
+                                    {% elif booking.status == 'completed' %}bg-secondary
+                                    {% elif booking.status == 'cancelled' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ booking.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ booking.booked_at[:16] }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewBookingDetails({{ booking.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if booking.status == 'confirmed' %}
+                                    <button class="btn btn-outline-danger" onclick="cancelBooking({{ booking.id }})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-outline-info" onclick="contactDriver('{{ booking.driver_name }}', '{{ booking.contact_number }}')">
+                                        <i class="fas fa-phone"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-bookmark fa-4x text-muted"></i>
+                </div>
+                <h4 class="text-muted mb-3">No Bookings Yet</h4>
+                <p class="text-muted mb-4">Start your journey by booking your first ride</p>
+                <a href="{{ url_for('find_ride') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i> Find Rides
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="fas fa-question-circle me-2 text-primary"></i>Need Help?</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-phone text-success me-2"></i>
+                                <small>Contact driver for ride updates</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-map-marker-alt text-warning me-2"></i>
+                                <small>Be at pickup location 10 mins early</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-star text-info me-2"></i>
+                                <small>Rate your experience after the ride</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewBookingDetails(bookingId) {
+    Swal.fire({
+        title: 'Booking Details',
+        text: 'Feature coming soon!',
+        icon: 'info'
+    });
+}
+
+function cancelBooking(bookingId) {
+    Swal.fire({
+        title: 'Cancel Booking?',
+        text: 'Are you sure you want to cancel this booking?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Yes, cancel it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire(
+                'Cancelled!',
+                'Your booking has been cancelled.',
+                'success'
+            );
+        }
+    });
+}
+
+function contactDriver(driverName, phoneNumber) {
+    if (phoneNumber) {
+        Swal.fire({
+            title: `Contact ${driverName}`,
+            html: `
+                <p>Driver: <strong>${driverName}</strong></p>
+                <p>Phone: <strong>${phoneNumber}</strong></p>
+                <div class="mt-3">
+                    <a href="tel:${phoneNumber}" class="btn btn-success me-2">
+                        <i class="fas fa-phone me-1"></i> Call Now
+                    </a>
+                    <a href="https://wa.me/91${phoneNumber}" class="btn btn-success" target="_blank">
+                        <i class="fab fa-whatsapp me-1"></i> WhatsApp
+                    </a>
+                </div>
+            `,
+            icon: 'info'
+        });
+    } else {
+        Swal.fire({
+            title: 'Contact Driver',
+            text: 'Phone number not available for this driver.',
+            icon: 'warning'
+        });
+    }
+}
+</script>
+{% endblock %}

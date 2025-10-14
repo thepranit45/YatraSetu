@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Ride Sharing Made Easy{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4 animate-fade-in-up">Share Your Journey, Split Your Costs</h1>
+                <p class="lead mb-4 animate-fade-in-up" style="animation-delay: 0.2s">
+                    Connect with fellow travelers going your way. Carpool on cars, bikes, or transport goods together. Safe, reliable, and economical.
+                </p>
+                
+                {% if not session.user_id %}
+                <div class="d-flex flex-wrap gap-3 animate-fade-in-up" style="animation-delay: 0.4s">
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-4 py-3">
+                        <i class="fas fa-rocket me-2"></i> Start Your Journey
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i> Sign In
+                    </a>
+                </div>
+                {% else %}
+                <div class="d-flex flex-wrap gap-3 animate-fade-in-up" style="animation-delay: 0.4s">
+                    <a href="{{ url_for('post_ride') }}" class="btn btn-light btn-lg px-4 py-3">
+                        <i class="fas fa-plus me-2"></i> Post Your Ride
+                    </a>
+                    <a href="{{ url_for('find_ride') }}" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="fas fa-search me-2"></i> Find a Ride
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="position-relative animate-fade-in-up" style="animation-delay: 0.6s">
+                    <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&h=400&fit=crop" 
+                         alt="Ride Sharing" class="img-fluid rounded-3 shadow-lg">
+                    <div class="position-absolute top-0 start-0 mt-3 ms-3">
+                        <span class="badge bg-success px-3 py-2"><i class="fas fa-shield-alt me-1"></i> 100% Safe</span>
+                    </div>
+                    <div class="position-absolute bottom-0 end-0 mb-3 me-3">
+                        <span class="badge bg-warning px-3 py-2"><i class="fas fa-rupee-sign me-1"></i> Save 60%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Stats -->
+{% if session.user_id %}
+<div class="container my-5">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <div class="feature-icon mx-auto">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3 class="fw-bold text-primary mb-2">{{ user_stats.active_rides or 0 }}</h3>
+                    <p class="text-muted mb-0">Active Rides</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <div class="feature-icon mx-auto">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <h3 class="fw-bold text-success mb-2">{{ user_stats.total_bookings or 0 }}</h3>
+                    <p class="text-muted mb-0">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <div class="feature-icon mx-auto">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3 class="fw-bold text-warning mb-2">{{ user_stats.rating or '4.8' }}</h3>
+                    <p class="text-muted mb-0">Your Rating</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <div class="feature-icon mx-auto">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <h3 class="fw-bold text-info mb-2">{{ user_stats.days_joined or '1' }}</h3>
+                    <p class="text-muted mb-0">Days with us</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Three Main Services -->
+<section class="container my-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold display-5 mb-3">Choose Your Ride Type</h2>
+        <p class="lead text-muted">Select how you want to travel or transport goods</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Car Pooling -->
+        <div class="col-md-4">
+            <div class="card service-card h-100" onclick="window.location.href='{{ url_for('find_ride') }}?type=car'">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Car Pooling</h4>
+                    <p class="text-muted mb-4">Share car rides for long routes. Perfect for comfortable journeys with fellow travelers.</p>
+                    
+                    <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
+                        <span class="badge bg-primary"><i class="fas fa-users me-1"></i> 4 Seats</span>
+                        <span class="badge bg-success"><i class="fas fa-snowflake me-1"></i> AC Cars</span>
+                        <span class="badge bg-info"><i class="fas fa-luggage-cart me-1"></i> Luggage Space</span>
+                    </div>
+                    
+                    <div class="text-start mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Perfect for family trips</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Comfortable long journeys</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Cost-effective travel</small>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100 py-3">
+                        <i class="fas fa-search me-2"></i> Find Car Rides
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bike Pooling -->
+        <div class="col-md-4">
+            <div class="card service-card h-100" onclick="window.location.href='{{ url_for('find_ride') }}?type=bike'">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Bike Pooling</h4>
+                    <p class="text-muted mb-4">Ride together on bikes. Quick, economical, and perfect for city and short-distance travel.</p>
+                    
+                    <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
+                        <span class="badge bg-primary"><i class="fas fa-user me-1"></i> 1 Seat</span>
+                        <span class="badge bg-warning"><i class="fas fa-bolt me-1"></i> Quick Rides</span>
+                        <span class="badge bg-success"><i class="fas fa-money-bill-wave me-1"></i> Most Economical</span>
+                    </div>
+                    
+                    <div class="text-start mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Fast city travel</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Beat the traffic</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Most affordable option</small>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success w-100 py-3">
+                        <i class="fas fa-search me-2"></i> Find Bike Rides
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goods Transport -->
+        <div class="col-md-4">
+            <div class="card service-card h-100" onclick="window.location.href='{{ url_for('find_ride') }}?type=logistics'">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Goods Transport</h4>
+                    <p class="text-muted mb-4">Send packages or move goods. Share vehicle space for cargo transportation.</p>
+                    
+                    <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
+                        <span class="badge bg-primary"><i class="fas fa-weight-hanging me-1"></i> 500kg+</span>
+                        <span class="badge bg-info"><i class="fas fa-shield-alt me-1"></i> Safe Delivery</span>
+                        <span class="badge bg-warning"><i class="fas fa-boxes me-1"></i> Various Sizes</span>
+                    </div>
+                    
+                    <div class="text-start mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Package delivery</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Furniture moving</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Business goods transport</small>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-warning w-100 py-3">
+                        <i class="fas fa-search me-2"></i> Find Transport
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold display-5 mb-3">How YatraSetu Works</h2>
+            <p class="lead text-muted">Simple steps to start your journey</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="position-relative mb-4">
+                    <div class="bg-primary rounded-circle p-4 mx-auto text-white" style="width: 100px; height: 100px;">
+                        <i class="fas fa-road fa-2x"></i>
+                    </div>
+                    <div class="position-absolute top-0 start-50 translate-middle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px; margin-left: 80px;">
+                        <strong>1</strong>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-3">Post Your Ride</h5>
+                <p class="text-muted">Going on a trip? Post your route, available seats/space, and travel details.</p>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div class="position-relative mb-4">
+                    <div class="bg-success rounded-circle p-4 mx-auto text-white" style="width: 100px; height: 100px;">
+                        <i class="fas fa-search fa-2x"></i>
+                    </div>
+                    <div class="position-absolute top-0 start-50 translate-middle bg-success text-white rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px; margin-left: 80px;">
+                        <strong>2</strong>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-3">Find Travelers</h5>
+                <p class="text-muted">Travelers going your way will find and book your available seats or space.</p>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div class="position-relative mb-4">
+                    <div class="bg-warning rounded-circle p-4 mx-auto text-white" style="width: 100px; height: 100px;">
+                        <i class="fas fa-handshake fa-2x"></i>
+                    </div>
+                    <div class="position-absolute top-0 start-50 translate-middle bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px; margin-left: 80px;">
+                        <strong>3</strong>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-3">Travel Together</h5>
+                <p class="text-muted">Meet, travel together, share costs, and make your journey more enjoyable.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+{% if not session.user_id %}
+<section class="container my-5">
+    <div class="card bg-gradient-primary text-white">
+        <div class="card-body p-5 text-center">
+            <h3 class="fw-bold mb-3 display-6">Ready to Start Your Journey?</h3>
+            <p class="mb-4 lead">Join thousands of travelers who trust YatraSetu for safe and economical rides.</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-5 py-3">
+                    <i class="fas fa-user-plus me-2"></i> Sign Up Free
+                </a>
+                <a href="{{ url_for('find_ride') }}" class="btn btn-outline-light btn-lg px-5 py-3">
+                    <i class="fas fa-search me-2"></i> Browse Rides
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Trust Indicators -->
+<section class="container my-5">
+    <div class="row g-4 text-center">
+        <div class="col-md-3">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="fas fa-shield-alt fa-2x text-primary me-3"></i>
+                <div class="text-start">
+                    <h5 class="fw-bold mb-0">100% Verified</h5>
+                    <small class="text-muted">All users verified</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="fas fa-map-marker-alt fa-2x text-success me-3"></i>
+                <div class="text-start">
+                    <h5 class="fw-bold mb-0">Live Tracking</h5>
+                    <small class="text-muted">Real-time location</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="fas fa-bell fa-2x text-danger me-3"></i>
+                <div class="text-start">
+                    <h5 class="fw-bold mb-0">Emergency SOS</h5>
+                    <small class="text-muted">24/7 safety</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="fas fa-star fa-2x text-warning me-3"></i>
+                <div class="text-start">
+                    <h5 class="fw-bold mb-0">4.8/5 Rating</h5>
+                    <small class="text-muted">User reviews</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock %}

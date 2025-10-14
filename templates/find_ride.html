@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block title %}Find a Ride - YatraSetu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        color: white;
+    }
+    
+    .filter-sidebar {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+    }
+    
+    .ride-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid;
+        margin-bottom: 1.5rem;
+    }
+    
+    .ride-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .ride-type-car { border-left-color: #2563eb; }
+    .ride-type-bike { border-left-color: #10b981; }
+    .ride-type-logistics { border-left-color: #f59e0b; }
+    
+    .driver-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .rating-stars {
+        color: #f59e0b;
+    }
+    
+    .price-tag {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .no-rides {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .no-rides-icon {
+        font-size: 4rem;
+        color: #e2e8f0;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .results-count {
+        background: #f1f5f9;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        color: #475569;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Search Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="search-card p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="fw-bold mb-2">Find Your Perfect Ride</h2>
+                        <p class="mb-0">Connect with travelers going your way and save up to 70% on travel costs</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <a href="{{ url_for('post_ride') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-plus me-2"></i> Post a Ride
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="filter-sidebar">
+                <h5 class="fw-bold mb-4"><i class="fas fa-filter me-2"></i>Filters</h5>
+                
+                <!-- Ride Type Filter -->
+                <div class="filter-group">
+                    <div class="filter-title">Ride Type</div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="car" id="filterCar" checked>
+                        <label class="form-check-label" for="filterCar">
+                            <i class="fas fa-car text-primary me-2"></i> Car Pooling
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="bike" id="filterBike" checked>
+                        <label class="form-check-label" for="filterBike">
+                            <i class="fas fa-motorcycle text-success me-2"></i> Bike Pooling
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="logistics" id="filterLogistics" checked>
+                        <label class="form-check-label" for="filterLogistics">
+                            <i class="fas fa-truck text-warning me-2"></i> Goods Transport
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Price Range -->
+                <div class="filter-group">
+                    <div class="filter-title">Price Range</div>
+                    <div class="mb-2">
+                        <label class="form-label small">Max Price (₹)</label>
+                        <input type="range" class="form-range" id="priceRange" min="0" max="10000" value="5000">
+                        <div class="d-flex justify-content-between">
+                            <small>₹0</small>
+                            <small id="priceRangeValue">₹5000</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Departure Time -->
+                <div class="filter-group">
+                    <div class="filter-title">Departure Time</div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="departureTime" value="any" id="timeAny" checked>
+                        <label class="form-check-label" for="timeAny">Any Time</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="departureTime" value="today" id="timeToday">
+                        <label class="form-check-label" for="timeToday">Today</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="departureTime" value="tomorrow" id="timeTomorrow">
+                        <label class="form-check-label" for="timeTomorrow">Tomorrow</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="departureTime" value="weekend" id="timeWeekend">
+                        <label class="form-check-label" for="timeWeekend">This Weekend</label>
+                    </div>
+                </div>
+
+                <!-- Vehicle Type -->
+                <div class="filter-group">
+                    <div class="filter-title">Vehicle Type</div>
+                    <select class="form-select form-select-sm" id="vehicleTypeFilter">
+                        <option value="">All Vehicles</option>
+                        <option value="hatchback">Hatchback</option>
+                        <option value="sedan">Sedan</option>
+                        <option value="suv">SUV</option>
+                        <option value="motorcycle">Motorcycle</option>
+                        <option value="tempo">Tempo</option>
+                        <option value="truck">Truck</option>
+                    </select>
+                </div>
+
+                <!-- Rating -->
+                <div class="filter-group">
+                    <div class="filter-title">Minimum Rating</div>
+                    <select class="form-select form-select-sm" id="ratingFilter">
+                        <option value="0">Any Rating</option>
+                        <option value="4">4+ Stars</option>
+                        <option value="4.5">4.5+ Stars</option>
+                        <option value="5">5 Stars</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-check me-2"></i> Apply Filters
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                        <i class="fas fa-redo me-2"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Column -->
+        <div class="col-lg-9">
+            <!-- Search Bar -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form id="searchForm">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">From</label>
+                                <input type="text" class="form-control" name="source" placeholder="Source city" value="{{ request.args.get('source', '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">To</label>
+                                <input type="text" class="form-control" name="destination" placeholder="Destination city" value="{{ request.args.get('destination', '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Date</label>
+                                <input type="date" class="form-control" name="travel_date" value="{{ request.args.get('travel_date', '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-2"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1">Available Rides</h4>
+                    <div class="results-count">
+                        <span id="resultsCount">0</span> rides found
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="sortBy">
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="departure_early">Departure: Earliest</option>
+                        <option value="departure_late">Departure: Latest</option>
+                        <option value="rating">Highest Rating</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Results Container -->
+            <div id="searchResults">
+                <div class="no-rides">
+                    <div class="no-rides-icon">
+                        <i class="fas fa-road"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">Search for Rides</h5>
+                    <p class="text-muted mb-4">Enter your route details to find available rides matching your journey.</p>
+                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                        <span class="badge bg-primary"><i class="fas fa-car me-1"></i> Car Pooling</span>
+                        <span class="badge bg-success"><i class="fas fa-motorcycle me-1"></i> Bike Pooling</span>
+                        <span class="badge bg-warning"><i class="fas fa-truck me-1"></i> Goods Transport</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="text-center py-5" style="display: none;">
+                <div class="loading-spinner mx-auto mb-3" style="width: 40px; height: 40px;"></div>
+                <p class="text-muted">Searching for rides...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/find-ride.js') }}"></script>
+{% endblock %}

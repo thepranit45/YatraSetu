@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Ride{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Track Your Ride</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h5>Ride Details</h5>
+                            <p><strong>Service:</strong> {{ booking.service_type }}</p>
+                            <p><strong>Pickup:</strong> {{ booking.pickup_address }}</p>
+                            <p><strong>Dropoff:</strong> {{ booking.dropoff_address }}</p>
+                            <p><strong>Status:</strong> <span id="statusBadge" class="badge bg-warning">{{ booking.status }}</span></p>
+                            <p><strong>Driver:</strong> {{ booking.driver_name or 'Finding driver...' }}</p>
+                            <p><strong>Fare:</strong> ₹{{ booking.estimated_fare }}</p>
+                        </div>
+                        <div class="col-md-8">
+                            <div id="map" class="map-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize map
+    const map = L.map('map').setView([{{ booking.pickup_lat or 28.6139 }}, {{ booking.pickup_lng or 77.2090 }}], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add pickup marker
+    {% if booking.pickup_lat and booking.pickup_lng %}
+    L.marker([{{ booking.pickup_lat }}, {{ booking.pickup_lng }}])
+        .addTo(map)
+        .bindPopup('Pickup Location: {{ booking.pickup_address }}')
+        .openPopup();
+    {% endif %}
+
+    // Add dropoff marker
+    {% if booking.dropoff_lat and booking.dropoff_lng %}
+    L.marker([{{ booking.dropoff_lat }}, {{ booking.dropoff_lng }}])
+        .addTo(map)
+        .bindPopup('Dropoff Location: {{ booking.dropoff_address }}');
+    {% endif %}
+
+    // Update driver location periodically
+    function updateDriverLocation() {
+        fetch(`/api/booking/{{ booking.id }}/location`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.current_lat && data.current_lng) {
+                    // Add or update driver marker
+                    if (window.driverMarker) {
+                        window.driverMarker.setLatLng([data.current_lat, data.current_lng]);
+                    } else {
+                        window.driverMarker = L.marker([data.current_lat, data.current_lng])
+                            .addTo(map)
+                            .bindPopup('Your Driver')
+                            .openPopup();
+                    }
+                    
+                    // Update status
+                    document.getElementById('statusBadge').textContent = data.status;
+                    document.getElementById('statusBadge').className = 'badge ' + 
+                        (data.status === 'completed' ? 'bg-success' : 
+                         data.status === 'cancelled' ? 'bg-danger' : 'bg-warning');
+                }
+            });
+    }
+
+    // Update every 5 seconds
+    setInterval(updateDriverLocation, 5000);
+    updateDriverLocation(); // Initial call
+</script>
+{% endblock %}
