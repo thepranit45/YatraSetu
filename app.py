@@ -210,6 +210,30 @@ def index():
 def find_ride():
     return render_template('find_ride.html')
 
+
+@app.route('/booking/<int:ride_id>')
+def booking(ride_id):
+    # Ensure user is logged in to book
+    if 'user_id' not in session:
+        flash('Please login to book a ride', 'warning')
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    ride = conn.execute(
+        'SELECT r.*, u.name as driver_name, u.phone as driver_phone FROM rides r JOIN users u ON r.user_id = u.id WHERE r.id = ?',
+        (ride_id,)
+    ).fetchone()
+    conn.close()
+
+    if not ride:
+        flash('Ride not found or may have been removed', 'error')
+        return redirect(url_for('find_ride'))
+
+    # Convert to dict for easier use in template
+    ride_dict = dict(ride)
+
+    return render_template('booking.html', ride=ride_dict)
+
 @app.route('/post-ride')
 def post_ride():
     if 'user_id' not in session:

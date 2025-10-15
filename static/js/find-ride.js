@@ -50,7 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <strong>${ride.driver_name}</strong> (${ride.ride_type})
                                     <div class="rating-stars">${'★'.repeat(Math.round(ride.rating))}</div>
                                 </div>
-                                <div class="ms-auto price-tag">₹${ride.price_per_unit}</div>
+                                <div class="ms-auto d-flex align-items-center gap-2">
+                                    <div class="price-tag">₹${ride.price_per_unit}</div>
+                                    <a href="/booking/${ride.id}" class="btn btn-sm btn-primary">Book</a>
+                                </div>
                             </div>
                             <p><strong>From:</strong> ${ride.source_city} &nbsp; | &nbsp; <strong>To:</strong> ${ride.destination_city}</p>
                             <p><strong>Departure:</strong> ${new Date(ride.departure_time).toLocaleString()}</p>

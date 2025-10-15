@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Ride - YatraSetu{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">Confirm Booking</h2>
+            <p class="text-muted">Review ride details and confirm your booking.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>{{ ride.driver_name }} <small class="text-muted">({{ ride.ride_type }})</small></h5>
+                    <p><strong>Route:</strong> {{ ride.source_city }} → {{ ride.destination_city }}</p>
+                    <p><strong>Departure:</strong> {{ ride.departure_time }}</p>
+                    <p><strong>Vehicle:</strong> {{ ride.vehicle_type }} ({{ ride.vehicle_number }})</p>
+                    <p><strong>Contact:</strong> {{ ride.contact_number }}</p>
+                    <p><strong>Price per unit:</strong> ₹{{ ride.price_per_unit }}</p>
+                    <p class="text-muted">{{ ride.additional_info }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-semibold">Booking</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" id="quantityInput" class="form-control" min="1" value="1">
+                        <small id="capacityInfo" class="text-muted">Available: {{ ride.available_capacity }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <p>Total: <strong id="totalAmount">₹{{ ride.price_per_unit }}</strong></p>
+                    </div>
+                    <div class="d-grid">
+                        <button id="confirmBookingBtn" class="btn btn-primary">Confirm Booking</button>
+                        <a href="{{ url_for('find_ride') }}" class="btn btn-outline-secondary mt-2">Back to Search</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const rideId = {{ ride.id | tojson }};
+const ridePrice = Number({{ ride.price_per_unit | tojson }});
+const availableCapacity = Number({{ ride.available_capacity | tojson }});
+
+function updateTotal() {
+    const qty = Number(document.getElementById('quantityInput').value || 1);
+    const total = qty * ridePrice;
+    document.getElementById('totalAmount').textContent = `₹${total}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('quantityInput').addEventListener('input', updateTotal);
+
+    document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
+        const qty = Number(document.getElementById('quantityInput').value || 1);
+        if (qty < 1 || qty > availableCapacity) {
+            Swal.fire('Invalid Quantity', 'Please enter a valid quantity within capacity.', 'warning');
+            return;
+        }
+
+        try {
+            const resp = await fetch('/api/book-ride', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ride_id: rideId, quantity: qty })
+            });
+            const result = await resp.json();
+            if (result.success) {
+                Swal.fire('Booked!', 'Your ride has been booked.', 'success').then(() => {
+                    window.location.href = '/my-bookings';
+                });
+            } else {
+                Swal.fire('Error', result.message || 'Could not book ride', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'An error occurred while booking', 'error');
+        }
+    });
+});
+</script>
+{% endblock %}
