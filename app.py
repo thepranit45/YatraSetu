@@ -435,6 +435,35 @@ def api_post_ride():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+
+@app.route('/chat')
+def chat_page():
+    return render_template('chat.html')
+
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    data = request.get_json() or {}
+    msg = (data.get('message') or '').strip()
+    if not msg:
+        return jsonify({'success': False, 'reply': "Please send a message."})
+
+    # Very small rule-based responder: expand as needed or plug an LLM here.
+    lower = msg.lower()
+    if 'hello' in lower or 'hi' in lower:
+        reply = f"Hello! I'm the YatraSetu assistant. How can I help you today?"
+    elif 'book' in lower or 'booking' in lower:
+        reply = "To book a ride, search for a ride and click 'Book' on the ride card. I can open the Find Ride page for you."
+    elif 'where' in lower and 'ride' in lower:
+        reply = "You can see available rides on the Find Ride page. Enter source and destination and press Search."
+    elif 'help' in lower:
+        reply = "I can help you find rides, post rides, and view your bookings. Try: 'Find rides from Pune to Mumbai on 2024-01-22'."
+    else:
+        # fallback echo with guidance
+        reply = "I heard: '" + msg + "'. I can help with searching rides, booking, and account info. Try asking: 'Find rides from Pune to Mumbai'."
+
+    return jsonify({'success': True, 'reply': reply})
+
 @app.route('/api/search-rides')
 def api_search_rides():
     source = request.args.get('source', '').strip().lower()
@@ -496,46 +525,99 @@ def api_book_ride():
     try:
         conn = get_db_connection()
         
-        # Get ride details
-        ride = conn.execute(
-            'SELECT * FROM rides WHERE id = ?', 
-            (ride_id,)
-        ).fetchone()
-        
-        if not ride:
-            return jsonify({'success': False, 'message': 'Ride not found'})
-        
-        if ride['available_capacity'] < quantity:
-            return jsonify({'success': False, 'message': 'Not enough capacity available'})
-        
-        # Calculate total amount
-        total_amount = ride['price_per_unit'] * quantity
-        
-        # Create booking
+        # Use a transaction to avoid race conditions on available_capacity
         cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO bookings (ride_id, passenger_id, quantity, total_amount)
-            VALUES (?, ?, ?, ?)
-        ''', (ride_id, session['user_id'], quantity, total_amount))
-        
-        # Update available capacity
-        conn.execute('''
-            UPDATE rides SET available_capacity = available_capacity - ? 
-            WHERE id = ?
-        ''', (quantity, ride_id))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Ride booked successfully!',
-            'total_amount': total_amount,
-            'booking_id': cursor.lastrowid
-        })
+        try:
+            cursor.execute('BEGIN IMMEDIATE')
+            ride = cursor.execute('SELECT * FROM rides WHERE id = ?', (ride_id,)).fetchone()
+            if not ride:
+                conn.rollback()
+                return jsonify({'success': False, 'message': 'Ride not found'})
+
+            if ride['available_capacity'] < quantity:
+                conn.rollback()
+                return jsonify({'success': False, 'message': 'Not enough capacity available'})
+
+            total_amount = ride['price_per_unit'] * quantity
+
+            cursor.execute('''
+                INSERT INTO bookings (ride_id, passenger_id, quantity, total_amount)
+                VALUES (?, ?, ?, ?)
+            ''', (ride_id, session['user_id'], quantity, total_amount))
+
+            cursor.execute('''
+                UPDATE rides SET available_capacity = available_capacity - ?
+                WHERE id = ?
+            ''', (quantity, ride_id))
+
+            conn.commit()
+            booking_id = cursor.lastrowid
+            return jsonify({
+                'success': True,
+                'message': 'Ride booked successfully!',
+                'total_amount': total_amount,
+                'booking_id': booking_id
+            })
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'success': False, 'message': str(e)})
+        finally:
+            conn.close()
         
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
+
+
+@app.route('/api/ride/<int:ride_id>')
+def api_get_ride(ride_id):
+    conn = get_db_connection()
+    try:
+        ride = conn.execute('SELECT r.*, u.name as driver_name, u.rating, u.total_rides FROM rides r JOIN users u ON r.user_id = u.id WHERE r.id = ?', (ride_id,)).fetchone()
+        if not ride:
+            return jsonify({'success': False, 'message': 'Ride not found'}), 404
+        ride_dict = dict(ride)
+        ride_dict['rating'] = ride_dict.get('rating', 4.5)
+        ride_dict['total_rides'] = ride_dict.get('total_rides', random.randint(5, 50))
+        return jsonify({'success': True, 'ride': ride_dict})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/city-suggest')
+def api_city_suggest():
+    """Proxy to Teleport cities API to avoid browser CORS/network blocks."""
+    query = request.args.get('q', '').strip()
+    if not query or len(query) < 2:
+        return jsonify({'success': True, 'suggestions': []})
+
+    try:
+        # Use standard library to avoid adding 'requests' dependency
+        from urllib import request as urlreq, parse as urlparse
+        import json
+
+        base = 'https://api.teleport.org/api/cities/'
+        params = urlparse.urlencode({'search': query, 'limit': 10})
+        full = f"{base}?{params}"
+        with urlreq.urlopen(full, timeout=5) as resp:
+            if resp.status != 200:
+                return jsonify({'success': False, 'message': f'Teleport error {resp.status}'}), 502
+            raw = resp.read().decode('utf-8')
+            j = json.loads(raw)
+
+        results = (j.get('_embedded') or {}).get('city:search-results', [])
+        names = [item.get('matching_full_name') for item in results if item.get('matching_full_name')]
+        # deduplicate while preserving order
+        seen = set(); uniq = []
+        for n in names:
+            key = n.lower()
+            if key not in seen:
+                seen.add(key)
+                uniq.append(n)
+        return jsonify({'success': True, 'suggestions': uniq})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/sos', methods=['POST'])
 

@@ -91,6 +91,26 @@
         font-weight: 600;
         color: #475569;
     }
+
+    /* Autocomplete suggestion dropdown */
+    .autocomplete-list {
+        position: absolute;
+        z-index: 1200;
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        width: 100%;
+        max-height: 220px;
+        overflow-y: auto;
+        border-radius: 6px;
+    }
+
+    .autocomplete-item {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+    }
+
+    .autocomplete-item:hover { background: #f1f5f9; }
 </style>
 {% endblock %}
 
@@ -224,11 +244,12 @@
                         <div class="row g-3 align-items-end">
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">From</label>
-                                <input type="text" class="form-control" name="source" placeholder="Source city" value="{{ request.args.get('source', '') }}">
+                                <input list="cityOptions" type="text" class="form-control" name="source" id="sourceInput" placeholder="Select source city" value="{{ request.args.get('source', '') }}">
+                                <datalist id="cityOptions"></datalist>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">To</label>
-                                <input type="text" class="form-control" name="destination" placeholder="Destination city" value="{{ request.args.get('destination', '') }}">
+                                <input list="cityOptions" type="text" class="form-control" name="destination" id="destinationInput" placeholder="Select destination city" value="{{ request.args.get('destination', '') }}">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Date</label>
@@ -241,6 +262,8 @@
                             </div>
                         </div>
                     </form>
+                    <!-- Visible debug/status for city suggestions (shows Teleport status) -->
+                    <div id="cityDebug" class="mt-2 small text-muted">Suggestions: not checked</div>
                 </div>
             </div>
 
@@ -290,5 +313,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/find-ride.js') }}"></script>
+<!-- Cache-bust query added so browsers fetch the latest JS when updated -->
+<script src="{{ url_for('static', filename='js/find-ride.js') }}?v=2"></script>
 {% endblock %}
