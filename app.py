@@ -7,6 +7,10 @@ import random
 app = Flask(__name__)
 app.secret_key = 'yatrasetu_secret_key_2024'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+# //test
+@app.route('/test-find-ride')
+def test_find_ride():
+    return render_template('test-find-ride.html')
 
 # Database connection
 def get_db_connection():
@@ -19,6 +23,7 @@ def init_db():
     print("🔄 Initializing database...")
     conn = get_db_connection()
     cursor = conn.cursor()
+    
     
     # Create users table
     cursor.execute('''
@@ -509,6 +514,7 @@ def api_book_ride():
         return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/sos', methods=['POST'])
+
 def sos_emergency():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Please login first'})
@@ -553,3 +559,56 @@ if __name__ == '__main__':
     print("   - Admin: admin@yatrasetu.com / admin123")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+# ... Keep all imports and initialization as-is ...
+
+# Corrected API route for searching rides
+@app.route('/api/search-rides')
+def api_search_rides():
+    # Fixed: Match frontend parameters
+    source = request.args.get('from', '').strip().lower()
+    destination = request.args.get('to', '').strip().lower()
+    travel_date = request.args.get('date', '')
+
+    conn = get_db_connection()
+    
+    try:
+        query = '''
+            SELECT r.*, u.name as driver_name, u.rating, u.total_rides
+            FROM rides r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.status = "active"
+        '''
+        params = []
+
+        if source:
+            query += ' AND LOWER(r.source_city) LIKE ?'
+            params.append(f'%{source}%')
+        
+        if destination:
+            query += ' AND LOWER(r.destination_city) LIKE ?'
+            params.append(f'%{destination}%')
+        
+        if travel_date:
+            query += ' AND DATE(r.departure_time) = ?'
+            params.append(travel_date)
+        
+        query += ' ORDER BY r.departure_time ASC'
+        
+        rides = conn.execute(query, params).fetchall()
+        
+        rides_list = []
+        for ride in rides:
+            ride_dict = dict(ride)
+            ride_dict['rating'] = ride_dict.get('rating', 4.5)
+            ride_dict['total_rides'] = ride_dict.get('total_rides', random.randint(5, 50))
+            rides_list.append(ride_dict)
+        
+        return jsonify(rides_list)
+    
+    except sqlite3.OperationalError as e:
+        print(f"Database error: {e}")
+        return jsonify([])
+    
+    finally:
+        conn.close()

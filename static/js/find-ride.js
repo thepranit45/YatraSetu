@@ -1,53 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+document.addEventListener('DOMContentLoaded', () => {
+    const searchForm = document.getElementById('searchForm');
+    const searchResults = document.getElementById('searchResults');
+    const resultsCount = document.getElementById('resultsCount');
+    const loadingSpinner = document.getElementById('loadingSpinner');
 
-const FindRide = () => {
-  const [rides, setRides] = useState([]);
-  const [searchParams, setSearchParams] = useState({
-    from: '',
-    to: '',
-    date: ''
-  });
+    // Update max price value display
+    const priceRange = document.getElementById('priceRange');
+    const priceRangeValue = document.getElementById('priceRangeValue');
+    priceRange.addEventListener('input', () => {
+        priceRangeValue.textContent = `₹${priceRange.value}`;
+    });
 
-  // 🚨 ERROR: Incorrect API call with wrong parameters
-  const searchRides = async () => {
-    try {
-      // ❌ WRONG: Sending data in wrong format
-      const response = await axios.get('/api/rides', {
-        params: {
-          fromCity: searchParams.from, // Should be just 'from'
-          toCity: searchParams.to,     // Should be just 'to' 
-          rideDate: searchParams.date  // Should be just 'date'
+    searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await fetchRides();
+    });
+
+    async function fetchRides() {
+        searchResults.innerHTML = '';
+        loadingSpinner.style.display = 'block';
+
+        const from = searchForm.elements['source'].value;
+        const to = searchForm.elements['destination'].value;
+        const date = searchForm.elements['travel_date'].value;
+
+        try {
+            const response = await fetch(`/api/search-rides?source=${from}&destination=${to}&travel_date=${date}`);
+            const rides = await response.json();
+
+            resultsCount.textContent = rides.length;
+
+            if (rides.length === 0) {
+                searchResults.innerHTML = `
+                    <div class="no-rides">
+                        <div class="no-rides-icon"><i class="fas fa-road"></i></div>
+                        <h5 class="text-muted mb-3">No rides found</h5>
+                        <p class="text-muted mb-4">Try different route or date.</p>
+                    </div>
+                `;
+            } else {
+                rides.forEach(ride => {
+                    const rideCard = document.createElement('div');
+                    rideCard.classList.add('ride-card', `ride-type-${ride.ride_type}`);
+                    rideCard.innerHTML = `
+                        <div class="p-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="driver-avatar me-3">${ride.driver_name.charAt(0)}</div>
+                                <div>
+                                    <strong>${ride.driver_name}</strong> (${ride.ride_type})
+                                    <div class="rating-stars">${'★'.repeat(Math.round(ride.rating))}</div>
+                                </div>
+                                <div class="ms-auto price-tag">₹${ride.price_per_unit}</div>
+                            </div>
+                            <p><strong>From:</strong> ${ride.source_city} &nbsp; | &nbsp; <strong>To:</strong> ${ride.destination_city}</p>
+                            <p><strong>Departure:</strong> ${new Date(ride.departure_time).toLocaleString()}</p>
+                            <p><strong>Vehicle:</strong> ${ride.vehicle_type} (${ride.vehicle_number}) &nbsp; | &nbsp; <strong>Capacity:</strong> ${ride.available_capacity}</p>
+                            <p><strong>Contact:</strong> ${ride.contact_number}</p>
+                        </div>
+                    `;
+                    searchResults.appendChild(rideCard);
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching rides:', error);
+        } finally {
+            loadingSpinner.style.display = 'none';
         }
-      });
-      setRides(response.data);
-    } catch (error) {
-      console.error('Error fetching rides:', error);
-      setRides([]);
     }
-  };
-
-  return (
-    <div>
-      <input 
-        placeholder="From" 
-        value={searchParams.from}
-        onChange={(e) => setSearchParams({...searchParams, from: e.target.value})}
-      />
-      <input 
-        placeholder="To" 
-        value={searchParams.to}
-        onChange={(e) => setSearchParams({...searchParams, to: e.target.value})}
-      />
-      <input 
-        type="date"
-        value={searchParams.date}
-        onChange={(e) => setSearchParams({...searchParams, date: e.target.value})}
-      />
-      <button onClick={searchRides}>Search Rides</button>
-      
-      {/* 🚨 ERROR: Always showing "0 rides found" */}
-      <div>{rides.length} rides found</div>
-    </div>
-  );
-};
+});

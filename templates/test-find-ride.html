@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Find Ride - YatraSetu</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input, button { padding: 8px; margin: 5px; }
+        .ride-card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .ride-card h4 { margin: 0; }
+    </style>
+</head>
+<body>
+    <h2>Test Find Ride</h2>
+    <div>
+        <input type="text" id="fromCity" placeholder="From">
+        <input type="text" id="toCity" placeholder="To">
+        <input type="date" id="travelDate">
+        <button onclick="searchRides()">Search Rides</button>
+    </div>
+    <div id="results"></div>
+
+    <script>
+        async function searchRides() {
+            const from = document.getElementById('fromCity').value;
+            const to = document.getElementById('toCity').value;
+            const date = document.getElementById('travelDate').value;
+
+            const url = `/api/search-rides?source=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}&travel_date=${encodeURIComponent(date)}`;
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Loading...';
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p>No rides found.</p>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = '';
+                data.forEach(ride => {
+                    const div = document.createElement('div');
+                    div.className = 'ride-card';
+                    div.innerHTML = `
+                        <h4>${ride.source_city} → ${ride.destination_city}</h4>
+                        <p>Driver: ${ride.driver_name} | Rating: ${ride.rating} | Price: ₹${ride.price_per_unit}</p>
+                        <p>Departure: ${ride.departure_time} | Vehicle: ${ride.vehicle_type}</p>
+                        <p>Available Capacity: ${ride.available_capacity}</p>
+                    `;
+                    resultsDiv.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+                resultsDiv.innerHTML = '<p>Error fetching rides.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
