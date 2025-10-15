@@ -7,8 +7,7 @@ import random
 app = Flask(__name__)
 app.secret_key = 'yatrasetu_secret_key_2024'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
-
-# Test page
+# //test
 @app.route('/test-find-ride')
 def test_find_ride():
     return render_template('test-find-ride.html')
@@ -25,7 +24,8 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Users table
+    
+    # Create users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,8 +40,9 @@ def init_db():
             member_since TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    print("✅ Created users table")
     
-    # Rides table
+    # Create rides table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS rides (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,8 +64,9 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
+    print("✅ Created rides table")
     
-    # Bookings table
+    # Create bookings table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,8 +80,9 @@ def init_db():
             FOREIGN KEY (passenger_id) REFERENCES users (id)
         )
     ''')
+    print("✅ Created bookings table")
     
-    # SOS alerts table
+    # Create SOS alerts table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sos_alerts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,11 +95,14 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
-
-    # Sample data
+    print("✅ Created sos_alerts table")
+    
+    # Check if we need to add sample data
     cursor.execute("SELECT COUNT(*) FROM users")
     user_count = cursor.fetchone()[0]
+    
     if user_count == 0:
+        print("📝 Adding sample data...")
         sample_users = [
             ('Prasad Sharma', 'prasad@example.com', 'password123', '9876543210', 'driver'),
             ('Siddhesh Patil', 'siddhesh@example.com', 'password123', '9876543211', 'passenger'),
@@ -106,11 +112,13 @@ def init_db():
             ('Pranav Kulkarni', 'pranav@example.com', 'password123', '9876543215', 'passenger'),
             ('Admin User', 'admin@yatrasetu.com', 'admin123', '9876543216', 'admin')
         ]
+        
         cursor.executemany('''
             INSERT INTO users (name, email, password, phone, user_type)
             VALUES (?, ?, ?, ?, ?)
         ''', sample_users)
         
+        # Create sample rides
         sample_rides = [
             (1, 'car', 'Nashik', 'Delhi', '2024-01-20 08:00:00', '2024-01-20 20:00:00', 
              'SUV', 'MH15AB1234', 4, 500.00, 'Comfortable AC SUV with music system', '9876543210'),
@@ -119,21 +127,28 @@ def init_db():
             (5, 'logistics', 'Pune', 'Mumbai', '2024-01-22 09:00:00', '2024-01-22 14:00:00',
              'Tempo', 'MH14EF9012', 500, 50.00, 'Goods transport with care', '9876543214')
         ]
+        
         cursor.executemany('''
             INSERT INTO rides (user_id, ride_type, source_city, destination_city, departure_time, 
-                               arrival_time, vehicle_type, vehicle_number, available_capacity, 
-                               price_per_unit, additional_info, contact_number)
+                             arrival_time, vehicle_type, vehicle_number, available_capacity, 
+                             price_per_unit, additional_info, contact_number)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', sample_rides)
+        
+        print("✅ Sample data added successfully!")
     
     conn.commit()
     conn.close()
     print("🎉 Database initialization complete!")
 
+# Check and initialize database
 def check_database():
     if not os.path.exists('yatrasetu.db'):
+        print("🆕 Creating new database...")
         init_db()
         return
+    
+    # Check if all tables exist
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -141,30 +156,38 @@ def check_database():
         cursor.execute("SELECT 1 FROM rides LIMIT 1")
         cursor.execute("SELECT 1 FROM bookings LIMIT 1")
         cursor.execute("SELECT 1 FROM sos_alerts LIMIT 1")
-    except sqlite3.OperationalError:
+        print("✅ All database tables exist")
+    except sqlite3.OperationalError as e:
+        print(f"🔄 Recreating missing tables: {e}")
         init_db()
     finally:
         conn.close()
 
-# ------------------ ROUTES ------------------
+# Routes
 @app.route('/')
 def index():
     user_stats = {}
     if 'user_id' in session:
         conn = get_db_connection()
+        
         try:
+            # Get user stats
             user_stats['active_rides'] = conn.execute(
                 'SELECT COUNT(*) FROM rides WHERE user_id = ? AND status = "active"',
                 (session['user_id'],)
             ).fetchone()[0]
+            
             user_stats['total_bookings'] = conn.execute(
                 'SELECT COUNT(*) FROM bookings WHERE passenger_id = ?',
                 (session['user_id'],)
             ).fetchone()[0]
+            
             user_stats['rating'] = conn.execute(
                 'SELECT rating FROM users WHERE id = ?',
                 (session['user_id'],)
             ).fetchone()[0]
+            
+            # Calculate days since joining
             join_date = conn.execute(
                 'SELECT member_since FROM users WHERE id = ?',
                 (session['user_id'],)
@@ -174,10 +197,13 @@ def index():
                 user_stats['days_joined'] = (datetime.now() - join_date).days
             else:
                 user_stats['days_joined'] = 1
-        except sqlite3.OperationalError:
+                
+        except sqlite3.OperationalError as e:
+            print(f"Database error: {e}")
             user_stats = {'active_rides': 0, 'total_bookings': 0, 'rating': 5.0, 'days_joined': 1}
         finally:
             conn.close()
+    
     return render_template('index.html', user_stats=user_stats)
 
 @app.route('/find-ride')
@@ -191,14 +217,208 @@ def post_ride():
         return redirect(url_for('login'))
     return render_template('post_ride.html')
 
-# ------------------ SEARCH RIDES API (FIXED) ------------------
-@app.route('/api/search-rides')
-def api_search_rides():
-    source = request.args.get('from', '').strip().lower()
-    destination = request.args.get('to', '').strip().lower()
-    travel_date = request.args.get('date', '')
+@app.route('/my-rides')
+def my_rides():
+    if 'user_id' not in session:
+        flash('Please login to view your rides', 'warning')
+        return redirect(url_for('login'))
     
     conn = get_db_connection()
+    try:
+        rides = conn.execute('''
+            SELECT r.*, COUNT(b.id) as bookings_count
+            FROM rides r 
+            LEFT JOIN bookings b ON r.id = b.ride_id 
+            WHERE r.user_id = ? 
+            GROUP BY r.id 
+            ORDER BY r.created_at DESC
+        ''', (session['user_id'],)).fetchall()
+    except sqlite3.OperationalError:
+        rides = []
+    finally:
+        conn.close()
+    
+    return render_template('my_rides.html', rides=rides)
+
+@app.route('/my-bookings')
+def my_bookings():
+    if 'user_id' not in session:
+        flash('Please login to view your bookings', 'warning')
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    try:
+        bookings = conn.execute('''
+            SELECT b.*, r.*, u.name as driver_name
+            FROM bookings b
+            JOIN rides r ON b.ride_id = r.id
+            JOIN users u ON r.user_id = u.id
+            WHERE b.passenger_id = ?
+            ORDER BY b.booked_at DESC
+        ''', (session['user_id'],)).fetchall()
+    except sqlite3.OperationalError:
+        bookings = []
+    finally:
+        conn.close()
+    
+    return render_template('my_bookings.html', bookings=bookings)
+
+@app.route('/profile')
+def profile():
+    if 'user_id' not in session:
+        flash('Please login to view your profile', 'warning')
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    user = conn.execute(
+        'SELECT * FROM users WHERE id = ?', 
+        (session['user_id'],)
+    ).fetchone()
+    conn.close()
+    
+    return render_template('profile.html', user=user)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        
+        conn = get_db_connection()
+        user = conn.execute(
+            'SELECT * FROM users WHERE email = ? AND password = ?',
+            (email, password)
+        ).fetchone()
+        conn.close()
+        
+        if user:
+            session['user_id'] = user['id']
+            session['user_name'] = user['name']
+            session['user_email'] = user['email']
+            session['user_type'] = user['user_type']
+            session['user_phone'] = user['phone']
+            
+            flash(f'Welcome back, {user["name"]}!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid email or password', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        phone = request.form['phone']
+        password = request.form['password']
+        user_type = request.form.get('user_type', 'passenger')
+        
+        try:
+            conn = get_db_connection()
+            
+            # Check if email already exists
+            existing_user = conn.execute(
+                'SELECT id FROM users WHERE email = ?', 
+                (email,)
+            ).fetchone()
+            
+            if existing_user:
+                flash('Email already exists. Please use a different email.', 'error')
+                return render_template('register.html')
+            
+            # Insert new user
+            cursor = conn.cursor()
+            cursor.execute(
+                'INSERT INTO users (name, email, phone, password, user_type) VALUES (?, ?, ?, ?, ?)',
+                (name, email, phone, password, user_type)
+            )
+            conn.commit()
+            
+            # Get the new user
+            user = conn.execute(
+                'SELECT * FROM users WHERE email = ?', 
+                (email,)
+            ).fetchone()
+            conn.close()
+            
+            # Auto login
+            session['user_id'] = user['id']
+            session['user_name'] = user['name']
+            session['user_email'] = user['email']
+            session['user_type'] = user['user_type']
+            session['user_phone'] = user['phone']
+            
+            flash(f'Account created successfully! Welcome to YatraSetu, {name}!', 'success')
+            return redirect(url_for('index'))
+            
+        except Exception as e:
+            print(f"Registration error: {str(e)}")
+            flash('Error creating account. Please try again.', 'error')
+    
+    return render_template('register.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out successfully', 'info')
+    return redirect(url_for('index'))
+
+# API Routes
+@app.route('/api/post-ride', methods=['POST'])
+def api_post_ride():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Please login first'})
+    
+    data = request.get_json()
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO rides (
+                user_id, ride_type, source_city, destination_city, departure_time,
+                arrival_time, vehicle_type, vehicle_number, available_capacity,
+                price_per_unit, additional_info, contact_number, preferred_language
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            session['user_id'],
+            data['ride_type'],
+            data['source_city'],
+            data['destination_city'],
+            data['departure_time'],
+            data.get('arrival_time'),
+            data['vehicle_type'],
+            data['vehicle_number'],
+            data['available_capacity'],
+            data['price_per_unit'],
+            data.get('additional_info', ''),
+            data['contact_number'],
+            data.get('preferred_language', 'hindi')
+        ))
+        
+        conn.commit()
+        ride_id = cursor.lastrowid
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Ride posted successfully!',
+            'ride_id': ride_id
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/search-rides')
+def api_search_rides():
+    source = request.args.get('source', '').strip().lower()
+    destination = request.args.get('destination', '').strip().lower()
+    travel_date = request.args.get('travel_date', '')
+    
+    conn = get_db_connection()
+    
     try:
         query = '''
             SELECT r.*, u.name as driver_name, u.rating, u.total_rides
@@ -207,35 +427,188 @@ def api_search_rides():
             WHERE r.status = "active"
         '''
         params = []
+        
         if source:
             query += ' AND LOWER(r.source_city) LIKE ?'
             params.append(f'%{source}%')
+        
         if destination:
             query += ' AND LOWER(r.destination_city) LIKE ?'
             params.append(f'%{destination}%')
+        
         if travel_date:
             query += ' AND DATE(r.departure_time) = ?'
             params.append(travel_date)
+        
         query += ' ORDER BY r.departure_time ASC'
         
         rides = conn.execute(query, params).fetchall()
+        
+        # Convert to list of dictionaries
+        rides_list = []
+        for ride in rides:
+            ride_dict = dict(ride)
+            # Add some sample data for demonstration
+            ride_dict['rating'] = ride_dict.get('rating', 4.5)
+            ride_dict['total_rides'] = ride_dict.get('total_rides', random.randint(5, 50))
+            rides_list.append(ride_dict)
+        
+        return jsonify(rides_list)
+        
+    except sqlite3.OperationalError:
+        return jsonify([])
+    finally:
+        conn.close()
+
+@app.route('/api/book-ride', methods=['POST'])
+def api_book_ride():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Please login first'})
+    
+    data = request.get_json()
+    ride_id = data['ride_id']
+    quantity = data['quantity']
+    
+    try:
+        conn = get_db_connection()
+        
+        # Get ride details
+        ride = conn.execute(
+            'SELECT * FROM rides WHERE id = ?', 
+            (ride_id,)
+        ).fetchone()
+        
+        if not ride:
+            return jsonify({'success': False, 'message': 'Ride not found'})
+        
+        if ride['available_capacity'] < quantity:
+            return jsonify({'success': False, 'message': 'Not enough capacity available'})
+        
+        # Calculate total amount
+        total_amount = ride['price_per_unit'] * quantity
+        
+        # Create booking
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO bookings (ride_id, passenger_id, quantity, total_amount)
+            VALUES (?, ?, ?, ?)
+        ''', (ride_id, session['user_id'], quantity, total_amount))
+        
+        # Update available capacity
+        conn.execute('''
+            UPDATE rides SET available_capacity = available_capacity - ? 
+            WHERE id = ?
+        ''', (quantity, ride_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Ride booked successfully!',
+            'total_amount': total_amount,
+            'booking_id': cursor.lastrowid
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/sos', methods=['POST'])
+
+def sos_emergency():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Please login first'})
+    
+    data = request.get_json()
+    
+    try:
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO sos_alerts (user_id, latitude, longitude, address)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            session['user_id'],
+            data.get('latitude'),
+            data.get('longitude'),
+            data.get('address', '')
+        ))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'SOS alert sent! Emergency services have been notified.'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+if __name__ == '__main__':
+    # Create necessary folders
+    os.makedirs('static/uploads', exist_ok=True)
+    os.makedirs('invoices', exist_ok=True)
+    
+    # Check and initialize database
+    check_database()
+    
+    print("🚀 Starting YatraSetu application...")
+    print("🌐 Server running at: http://localhost:5000")
+    print("🔑 Test accounts:")
+    print("   - Driver: prasad@example.com / password123")
+    print("   - Passenger: siddhesh@example.com / password123")
+    print("   - Admin: admin@yatrasetu.com / admin123")
+    
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
+# ... Keep all imports and initialization as-is ...
+
+# Corrected API route for searching rides
+@app.route('/api/search-rides')
+def api_search_rides():
+    # Fixed: Match frontend parameters
+    source = request.args.get('from', '').strip().lower()
+    destination = request.args.get('to', '').strip().lower()
+    travel_date = request.args.get('date', '')
+
+    conn = get_db_connection()
+    
+    try:
+        query = '''
+            SELECT r.*, u.name as driver_name, u.rating, u.total_rides
+            FROM rides r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.status = "active"
+        '''
+        params = []
+
+        if source:
+            query += ' AND LOWER(r.source_city) LIKE ?'
+            params.append(f'%{source}%')
+        
+        if destination:
+            query += ' AND LOWER(r.destination_city) LIKE ?'
+            params.append(f'%{destination}%')
+        
+        if travel_date:
+            query += ' AND DATE(r.departure_time) = ?'
+            params.append(travel_date)
+        
+        query += ' ORDER BY r.departure_time ASC'
+        
+        rides = conn.execute(query, params).fetchall()
+        
         rides_list = []
         for ride in rides:
             ride_dict = dict(ride)
             ride_dict['rating'] = ride_dict.get('rating', 4.5)
             ride_dict['total_rides'] = ride_dict.get('total_rides', random.randint(5, 50))
             rides_list.append(ride_dict)
+        
         return jsonify(rides_list)
-    except sqlite3.OperationalError:
+    
+    except sqlite3.OperationalError as e:
+        print(f"Database error: {e}")
         return jsonify([])
+    
     finally:
         conn.close()
-
-# ------------------ OTHER ROUTES ------------------
-# ... Keep all other routes (login, register, post ride, book ride, profile, sos) unchanged ...
-
-if __name__ == '__main__':
-    os.makedirs('static/uploads', exist_ok=True)
-    os.makedirs('invoices', exist_ok=True)
-    check_database()
-    app.run(debug=True, host='0.0.0.0', port=5000)
