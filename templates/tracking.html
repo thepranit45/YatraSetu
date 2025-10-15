@@ -31,56 +31,6 @@
     </div>
 </div>
 
-<script>
-    // Initialize map
-    const map = L.map('map').setView([{{ booking.pickup_lat or 28.6139 }}, {{ booking.pickup_lng or 77.2090 }}], 13);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Add pickup marker
-    {% if booking.pickup_lat and booking.pickup_lng %}
-    L.marker([{{ booking.pickup_lat }}, {{ booking.pickup_lng }}])
-        .addTo(map)
-        .bindPopup('Pickup Location: {{ booking.pickup_address }}')
-        .openPopup();
-    {% endif %}
-
-    // Add dropoff marker
-    {% if booking.dropoff_lat and booking.dropoff_lng %}
-    L.marker([{{ booking.dropoff_lat }}, {{ booking.dropoff_lng }}])
-        .addTo(map)
-        .bindPopup('Dropoff Location: {{ booking.dropoff_address }}');
-    {% endif %}
-
-    // Update driver location periodically
-    function updateDriverLocation() {
-        fetch(`/api/booking/{{ booking.id }}/location`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.current_lat && data.current_lng) {
-                    // Add or update driver marker
-                    if (window.driverMarker) {
-                        window.driverMarker.setLatLng([data.current_lat, data.current_lng]);
-                    } else {
-                        window.driverMarker = L.marker([data.current_lat, data.current_lng])
-                            .addTo(map)
-                            .bindPopup('Your Driver')
-                            .openPopup();
-                    }
-                    
-                    // Update status
-                    document.getElementById('statusBadge').textContent = data.status;
-                    document.getElementById('statusBadge').className = 'badge ' + 
-                        (data.status === 'completed' ? 'bg-success' : 
-                         data.status === 'cancelled' ? 'bg-danger' : 'bg-warning');
-                }
-            });
-    }
-
-    // Update every 5 seconds
-    setInterval(updateDriverLocation, 5000);
-    updateDriverLocation(); // Initial call
-</script>
+<script id="tracking-data" type="application/json">{{ booking | tojson }}</script>
+<script src="{{ url_for('static', filename='js/tracking.js') }}"></script>
 {% endblock %}

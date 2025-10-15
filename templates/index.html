@@ -111,7 +111,7 @@
     <div class="row g-4">
         <!-- Car Pooling -->
         <div class="col-md-4">
-            <div class="card service-card h-100" onclick="window.location.href='{{ url_for('find_ride') }}?type=car'">
+            <div class="card service-card h-100" data-type="car">
                 <div class="card-body text-center p-4">
                     <div class="feature-icon">
                         <i class="fas fa-car"></i>
@@ -149,7 +149,7 @@
 
         <!-- Bike Pooling -->
         <div class="col-md-4">
-            <div class="card service-card h-100" onclick="window.location.href='{{ url_for('find_ride') }}?type=bike'">
+            <div class="card service-card h-100" data-type="bike">
                 <div class="card-body text-center p-4">
                     <div class="feature-icon">
                         <i class="fas fa-motorcycle"></i>
@@ -187,7 +187,7 @@
 
         <!-- Goods Transport -->
         <div class="col-md-4">
-            <div class="card service-card h-100" onclick="window.location.href='{{ url_for('find_ride') }}?type=logistics'">
+            <div class="card service-card h-100" data-type="logistics">
                 <div class="card-body text-center p-4">
                     <div class="feature-icon">
                         <i class="fas fa-truck"></i>

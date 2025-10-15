@@ -50,46 +50,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-const rideId = {{ ride.id | tojson }};
-const ridePrice = Number({{ ride.price_per_unit | tojson }});
-const availableCapacity = Number({{ ride.available_capacity | tojson }});
-
-function updateTotal() {
-    const qty = Number(document.getElementById('quantityInput').value || 1);
-    const total = qty * ridePrice;
-    document.getElementById('totalAmount').textContent = `₹${total}`;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('quantityInput').addEventListener('input', updateTotal);
-
-    document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
-        const qty = Number(document.getElementById('quantityInput').value || 1);
-        if (qty < 1 || qty > availableCapacity) {
-            Swal.fire('Invalid Quantity', 'Please enter a valid quantity within capacity.', 'warning');
-            return;
-        }
-
-        try {
-            const resp = await fetch('/api/book-ride', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ride_id: rideId, quantity: qty })
-            });
-            const result = await resp.json();
-            if (result.success) {
-                Swal.fire('Booked!', 'Your ride has been booked.', 'success').then(() => {
-                    window.location.href = '/my-bookings';
-                });
-            } else {
-                Swal.fire('Error', result.message || 'Could not book ride', 'error');
-            }
-        } catch (e) {
-            console.error(e);
-            Swal.fire('Error', 'An error occurred while booking', 'error');
-        }
-    });
-});
-</script>
+<script id="booking-data" type="application/json">{{ ride | tojson }}</script>
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
 {% endblock %}

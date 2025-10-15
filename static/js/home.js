@@ -36,7 +36,7 @@ class HomePage {
 
     handleCardClick(e) {
         const card = e.currentTarget;
-        const rideType = this.getRideTypeFromCard(card);
+        const rideType = card.dataset.type || this.getRideTypeFromCard(card);
         
         // Add click animation
         card.style.transform = 'scale(0.95)';

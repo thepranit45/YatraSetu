@@ -152,13 +152,13 @@
                             <!-- Action Buttons -->
                             <div class="col-12 mt-4">
                                 <div class="d-flex gap-2 flex-wrap">
-                                    <button type="button" class="btn btn-primary" onclick="editProfile()">
+                                    <button type="button" class="btn btn-primary" data-action="edit-profile">
                                         <i class="fas fa-edit me-2"></i> Edit Profile
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary" onclick="changePassword()">
+                                    <button type="button" class="btn btn-outline-secondary" data-action="change-password">
                                         <i class="fas fa-lock me-2"></i> Change Password
                                     </button>
-                                    <button type="button" class="btn btn-outline-info" onclick="showVerification()">
+                                    <button type="button" class="btn btn-outline-info" data-action="show-verification">
                                         <i class="fas fa-shield-alt me-2"></i> Verify Account
                                     </button>
                                 </div>
@@ -220,39 +220,6 @@
     </div>
 </div>
 
-<script>
-function editProfile() {
-    Swal.fire({
-        title: 'Edit Profile',
-        text: 'Profile editing feature coming soon!',
-        icon: 'info'
-    });
-}
-
-function changePassword() {
-    Swal.fire({
-        title: 'Change Password',
-        text: 'Password change feature coming soon!',
-        icon: 'info'
-    });
-}
-
-function showVerification() {
-    Swal.fire({
-        title: 'Account Verification',
-        html: `
-            <div class="text-start">
-                <p>Complete these verifications for enhanced safety:</p>
-                <ul class="text-start">
-                    <li>✅ Email Address - <strong>Verified</strong></li>
-                    <li>📱 Phone Number - <strong>{{ 'Verified' if user.phone else 'Pending' }}</strong></li>
-                    <li>🆔 Government ID - <strong>Pending</strong></li>
-                    <li>📸 Selfie Verification - <strong>Pending</strong></li>
-                </ul>
-            </div>
-        `,
-        icon: 'info'
-    });
-}
-</script>
+<script id="profile-data" type="application/json">{{ user | tojson }}</script>
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
 {% endblock %}
